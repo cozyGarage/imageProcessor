@@ -1,22 +1,38 @@
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageFilter, ImageEnhance
 import os
 
-path = "./imgs" # folder for unedited images
-pathOut = "./editedImgs" # folder for edited images
+def process_image(input_folder, output_folder, width=1280, height=800, sharpen_strength=2.0, contrast_factor=1.2):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
 
-for filename in os.listdir(path):
-    img = Image.open(f"{path}/{filename}")
+    for filename in os.listdir(input_folder):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+            try:
+                image_path = os.path.join(input_folder, filename)
+                image = Image.open(image_path)
+                
+                # Resize the image
+                image = image.resize((width, height))
+                
+                # Apply sharpen filter
+                sharpened_image = image.filter(ImageFilter.SHARPEN)
+                
+                # Adjust contrast
+                enhanced_image = ImageEnhance.Contrast(sharpened_image).enhance(contrast_factor)
+                
+                # Create a modified filename
+                modified_filename = f"modified_{filename}"
+                output_path = os.path.join(output_folder, modified_filename)
+                
+                # Save the modified image
+                enhanced_image.save(output_path)
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
+        else:
+            print(f"Skipping {filename}, not an image file.")
 
-    # sharpening, BW
-    edit = img.filter(ImageFilter.SHARPEN).convert('L').rotate(-90)
-
-    # contrast
-    factor = 1.5
-    enhancer = ImageEnhance.Contrast(edit)
-    edit = enhancer.enhance(factor)
-
-    # ADD MORE EDITS FROM DOCUMENTATION https://pillow.readthedocs.io/en/stable/
-
-    clean_name = os.path.splitext(filename)[0]
-
-    edit.save(f'.{pathOut}/{clean_name}_edited.jpg')
+if __name__ == "__main__":
+    input_folder = "./imgs"
+    output_folder = "./editedImgs"
+    
+    process_image(input_folder, output_folder)
